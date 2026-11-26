@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0f1012">
+<meta name="description" content="A personal execution experiment: say what you will do, do it, and record whether you kept your word.">
+<title>The King of My Words</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1012'/%3E%3Cpath d='M5 22V10.5l6.5 5L16 7l4.5 8.5 6.5-5V22z' fill='%23e5b84b'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0f1012;
+  --surface: #16181b;
+  --surface-2: #1f2227;
+  --line: #272b31;
+  --line-strong: #3b4149;
+  --text: #eceef0;
+  --text-2: #a3a9b0;
+  --text-3: #868e97;
+  --gold: #e5b84b;
+  --gold-hover: #f0c65e;
+  --gold-soft: rgba(229, 184, 75, 0.12);
+  --kept: #58c98f;
+  --kept-soft: rgba(88, 201, 143, 0.13);
+  --broken: #e5605f;
+  --broken-soft: rgba(229, 96, 95, 0.12);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Noto Serif", "Songti SC", serif;
+  --radius: 14px;
+  --radius-sm: 9px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: radial-gradient(720px 380px at 50% -160px, rgba(229, 184, 75, 0.09), transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--text);
+  font: 16px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+::placeholder { color: var(--text-3); opacity: 1; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.page { --pad: clamp(16px, 4vw, 40px); max-width: 1080px; margin: 0 auto; padding: clamp(16px, 4vw, 40px) var(--pad) 56px; }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: clamp(16px, 3vw, 28px); }
+h1 { margin: 0; font-family: var(--serif); font-weight: 500; font-size: clamp(1.5rem, 3.4vw, 2rem); letter-spacing: -0.015em; line-height: 1.2; }
+h1 em { font-style: normal; color: var(--gold); }
+.tagline { margin: 2px 0 0; color: var(--text-3); font-size: 14px; }
+.today { margin: 0; font-size: 14px; color: var(--text-3); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 396px) minmax(0, 1fr); gap: 20px clamp(20px, 4vw, 56px); align-items: start; }
+.now { position: sticky; top: 20px; display: grid; gap: 20px; grid-column: 1; grid-row: 1 / span 2; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 4px; margin: -4px; }
+@media (max-height: 720px) { .now { position: static; max-height: none; overflow: visible; } }
+.stats-wrap { grid-column: 2; grid-row: 1; min-width: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px, 3.4vw, 24px); min-width: 0; }
+
+/* Declare box */
+.vow-label { display: block; font-family: var(--serif); font-style: italic; font-size: 24px; line-height: 1.2; color: var(--gold); margin-bottom: 2px; }
+#wordInput { display: block; width: 100%; min-height: 80px; margin: 0 0 16px; padding: 4px 0 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; resize: none; outline: none; font-family: var(--serif); font-size: 19px; line-height: 1.45; }
+#wordInput:focus { border-bottom-color: var(--gold); }
+.meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin-bottom: 18px; }
+.field label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px; color: var(--text-2); }
+.field label span { color: var(--text-3); font-size: 12px; }
+.field input { width: 100%; height: 42px; padding: 0 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 16px; outline: none; }
+.field input:focus { border-color: var(--line-strong); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chips:empty { display: none; }
+.chip { border: 1px solid var(--line); background: transparent; color: var(--text-2); border-radius: 999px; padding: 5px 11px; font-size: 12.5px; line-height: 1.3; }
+.chip:hover { border-color: var(--line-strong); color: var(--text); }
+.chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 18px; border-radius: var(--radius-sm); border: 1px solid transparent; font-weight: 600; font-size: 15px; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s, opacity 0.15s; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn-primary { width: 100%; background: var(--gold); color: #1b1507; }
+.btn-primary:hover:not(:disabled) { background: var(--gold-hover); }
+.btn-outline { background: transparent; border-color: var(--line-strong); color: var(--text); }
+.btn-outline:hover { background: var(--surface-2); }
+.btn-ghost { min-height: 38px; padding: 0 12px; background: transparent; border-color: var(--line); color: var(--text-2); font-weight: 500; font-size: 13.5px; }
+.btn-ghost:hover { color: var(--text); border-color: var(--line-strong); }
+.btn-danger { color: var(--broken); }
+.btn-danger:hover { color: var(--broken); border-color: rgba(229, 96, 95, 0.5); }
+.btn-danger.armed, .btn-danger-solid { background: var(--broken); border-color: var(--broken); color: #1c0808; }
+.btn-danger.armed:hover, .btn-danger-solid:hover:not(:disabled) { background: #ec7473; border-color: #ec7473; color: #1c0808; }
+
+/* Active commitment */
+.active { border-color: rgba(229, 184, 75, 0.42); background: linear-gradient(180deg, rgba(229, 184, 75, 0.07), rgba(229, 184, 75, 0) 48%), var(--surface); }
+.active:focus { outline: none; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+.active-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.active-head .eyebrow { color: var(--gold); }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); margin-right: 8px; vertical-align: 1px; animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.elapsed { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vow { margin: 0 0 10px; font-family: var(--serif); font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.35; overflow-wrap: anywhere; }
+.vow .iw { color: var(--text-2); }
+.vow-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: 13px; color: var(--text-2); }
+.vow-meta .sep { color: var(--text-3); }
+.vow-meta .over { color: var(--broken); }
+.bar { height: 3px; margin: 16px 0; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--gold); border-radius: 2px; transition: width 0.5s linear; }
+.bar.over i { background: var(--broken); }
+.actions { display: flex; gap: 10px; }
+.btn-kept, .btn-broken { flex: 1 1 0; }
+.btn-kept { background: var(--kept-soft); border-color: rgba(88, 201, 143, 0.38); color: var(--kept); }
+.btn-kept:hover { background: rgba(88, 201, 143, 0.24); }
+.btn-broken { background: transparent; border-color: var(--line-strong); color: var(--text-2); }
+.btn-broken:hover { border-color: rgba(229, 96, 95, 0.55); color: var(--broken); background: var(--broken-soft); }
+.btn-kept.is-selected { background: var(--kept); border-color: var(--kept); color: #06140c; }
+.btn-broken.is-selected { background: var(--broken); border-color: var(--broken); color: #1c0808; }
+.active-note { margin-top: 14px; }
+.active-note input { width: 100%; height: 46px; padding: 0 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 16px; outline: none; }
+.active-note input:focus { border-color: var(--line-strong); }
+.note-row { display: flex; gap: 10px; margin-top: 10px; }
+.note-row .btn-record { flex: 1 1 0; }
+.btn-record-kept { background: var(--kept); color: #06140c; }
+.btn-record-broken { background: var(--broken); color: #1c0808; }
+.btn-record-kept:hover { background: #6dd6a2; }
+.btn-record-broken:hover { background: #ec7473; }
+.hint { margin: 14px 0 0; font-size: 13px; color: var(--text-3); }
+.undo-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.undo-row .btn-ghost { min-height: 34px; }
+.undo-left { font-size: 12.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* Stats */
+.stat b.bump { animation: bump 0.45s ease-out; }
+@keyframes bump { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 4px 0 18px; }
+.stat { min-width: 0; padding: 0 14px; border-left: 1px solid var(--line); }
+.stat:first-child { padding-left: 0; border-left: 0; }
+.stat b { display: block; font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; transform-origin: left center; }
+.stat-streak b { color: var(--gold); }
+.stat span { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.since { margin: -6px 0 0; font-size: 12.5px; color: var(--text-3); }
+
+/* Record */
+.record { grid-column: 2; grid-row: 2; min-width: 0; }
+.record-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.seg { display: inline-flex; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.seg button { border: 0; background: transparent; color: var(--text-2); padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.seg button .n { margin-left: 4px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+.seg button[aria-pressed="true"] .n { color: var(--text-2); }
+.tagfilter { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--text-2); }
+.tagfilter .chip[aria-pressed="true"] { color: var(--text); background: var(--surface-2); border-color: var(--line-strong); }
+.history { list-style: none; margin: 0; padding: 0; }
+.day { padding: 20px 0 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.row-btn { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; width: calc(100% + 20px); margin: 0 -10px; padding: 12px 10px; text-align: left; border: 0; border-top: 1px solid var(--line); background: transparent; color: inherit; border-radius: 0; }
+.row-btn:hover { background: var(--surface); }
+.row-body { display: block; min-width: 0; }
+.mark { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; }
+.mark svg { width: 11px; height: 11px; }
+.mark-kept { background: var(--kept-soft); color: var(--kept); }
+.mark-broken { background: var(--broken-soft); color: var(--broken); }
+.row-vow { display: block; font-family: var(--serif); font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.row-vow .iw { color: var(--text-3); }
+.row-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 3px; font-size: 12.5px; color: var(--text-3); }
+.row-meta .st-kept { color: var(--kept); }
+.row-meta .st-broken { color: var(--broken); }
+.row-meta .late { color: var(--gold); }
+.row-note { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; margin-top: 4px; font-size: 14px; color: var(--text-2); }
+.url { color: var(--text); }
+.row-enter { animation: enter 0.35s ease-out; }
+@keyframes enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.empty { padding: 40px 12px; border-top: 1px solid var(--line); text-align: center; color: var(--text-3); font-size: 14px; }
+.empty b { display: block; margin-bottom: 4px; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 18px; color: var(--text-2); }
+.more { width: 100%; margin-top: 12px; }
+
+/* By tag */
+.bytag { padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--radius); }
+.bytag .eyebrow { margin-bottom: 6px; }
+#byTagList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+#byTagList .hint { grid-column: 1 / -1; }
+.tagrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; min-width: 0; padding: 8px; text-align: left; border: 0; background: transparent; color: inherit; border-radius: 8px; }
+.tagrow:hover { background: var(--surface); }
+.tagrow .tname { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagrow .tnum { font-size: 12.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.tagrow .tbar { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.tagrow .tbar i { display: block; height: 100%; background: var(--kept); }
+
+/* Data footer */
+.data { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 24px; margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); }
+.data p { max-width: 54ch; margin: 6px 0 0; font-size: 13.5px; color: var(--text-2); }
+.data .warn { color: var(--gold); }
+.data-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Toast + modal */
+.toast { position: fixed; left: 50%; bottom: 20px; z-index: 50; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); padding: 12px 12px 12px 16px; background: #25282d; border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); font-size: 14px; transform: translateX(-50%); animation: toast-in 0.2s ease-out; }
+.toast button { flex: none; padding: 6px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--gold); font-weight: 600; }
+.toast-error { border-color: rgba(229, 96, 95, 0.55); }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
+.modal-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.68); }
+.modal-card { position: relative; width: 100%; max-width: 440px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px 24px 0; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); animation: modal-in 0.18s ease-out; }
+@keyframes modal-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+.modal-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+.modal-body { font-size: 14.5px; color: var(--text-2); }
+.modal-body p { margin: 0 0 10px; overflow-wrap: anywhere; }
+.modal-vow { color: var(--text); font-size: 20px; line-height: 1.35; }
+.modal-vow .iw { color: var(--text-2); }
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; margin: 14px 0 0; font-size: 13.5px; }
+.facts dt { color: var(--text-3); }
+.facts dd { margin: 0; color: var(--text); font-variant-numeric: tabular-nums; }
+.modal-note { margin-top: 14px !important; padding: 10px 12px; background: var(--surface-2); border-radius: var(--radius-sm); color: var(--text) !important; }
+.modal-note .eyebrow { display: block; margin-bottom: 2px; }
+.modal-note .note-text { margin: 0; }
+.link-row { display: block; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); color: var(--text); text-decoration: none; overflow-wrap: anywhere; line-height: 1.4; }
+.link-row:hover { border-color: var(--gold); }
+.link-row b { display: block; font-size: 13px; font-weight: 600; color: var(--gold); }
+.link-row span { display: block; margin-top: 1px; font-size: 12.5px; color: var(--text-3); }
+.modal-actions { position: sticky; bottom: 0; z-index: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin: 20px -24px 0; padding: 20px 24px 24px; background: linear-gradient(180deg, rgba(22, 24, 27, 0), var(--surface) 20px); }
+.modal-actions .push { margin-right: auto; }
+.modal input { width: 100%; height: 44px; margin-top: 6px; padding: 0 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 16px; outline: none; text-transform: uppercase; letter-spacing: 0.1em; }
+.modal input:focus { border-color: var(--line-strong); }
+
+/* Rank + progress strip */
+.rank { margin: 0 0 16px; }
+.rank-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 7px; }
+.rank-name { font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--gold); }
+.rank-next { font-size: 12.5px; color: var(--text-3); text-align: right; }
+.rank-bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.rank-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), var(--gold-hover)); border-radius: 2px; transition: width 0.4s ease-out; }
+.strip-wrap { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.strip-wrap .eyebrow { margin-bottom: 9px; }
+.strip { display: grid; grid-template-columns: repeat(35, 1fr); gap: 3px; }
+.strip .cell { height: 14px; border-radius: 3px; background: var(--surface-2); }
+.strip .cell.lvl1 { background: rgba(229, 184, 75, 0.35); }
+.strip .cell.lvl2 { background: rgba(229, 184, 75, 0.6); }
+.strip .cell.lvl3 { background: var(--gold); }
+.strip .cell.miss { background: var(--broken-soft); box-shadow: inset 0 0 0 1px rgba(229, 96, 95, 0.5); }
+.strip-key { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 9px 0 0; font-size: 12px; color: var(--text-3); }
+.strip-key i.kd { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+.strip-key .kd-kept { background: var(--gold); }
+.strip-key .kd-broken { background: var(--broken-soft); box-shadow: inset 0 0 0 1px rgba(229, 96, 95, 0.5); }
+.strip-key .kd-none { background: var(--surface-2); }
+
+/* Celebration: a kept word draws its own tick; a new rank brings the crown. */
+.cheer { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; pointer-events: none; }
+.cheer-box { display: grid; justify-items: center; gap: 12px; max-width: min(86vw, 420px); padding: clamp(20px, 5vw, 30px) clamp(24px, 6vw, 44px); border-radius: 20px; background: rgba(15, 16, 18, 0.9); border: 1px solid rgba(229, 184, 75, 0.42); box-shadow: 0 0 90px rgba(229, 184, 75, 0.22), 0 24px 64px rgba(0, 0, 0, 0.6); text-align: center; animation: cheer-in 0.28s ease-out; }
+@keyframes cheer-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+.cheer-sub { margin: 0; font-family: var(--serif); font-style: italic; font-size: 17px; color: var(--text-2); }
+.cheer-rank { margin: 0; font-family: var(--serif); font-size: clamp(1.3rem, 4.6vw, 1.7rem); line-height: 1.2; color: var(--gold); }
+.cheer-check { width: clamp(84px, 24vw, 116px); height: auto; overflow: visible; }
+.cheer-check .ring { fill: none; stroke: rgba(88, 201, 143, 0.5); stroke-width: 5; stroke-dasharray: 327; stroke-dashoffset: 327; animation: draw 0.5s ease-out forwards; }
+.cheer-check .tick { fill: none; stroke: var(--kept); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 80; stroke-dashoffset: 80; animation: draw 0.38s ease-out 0.34s forwards; }
+.cheer-check .spark { fill: var(--gold); opacity: 0; animation: spark 0.7s ease-out 0.35s forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); } }
+.cheer-crown { width: clamp(84px, 24vw, 116px); height: auto; }
+.cheer-crown .crown { fill: var(--gold); stroke: var(--gold-hover); stroke-width: 3; stroke-linejoin: round; transform-origin: 60px 62px; animation: crown-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes crown-in { from { opacity: 0; transform: scale(0.4) rotate(-8deg); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 640px) { .strip { gap: 2px; } .strip .cell { height: 11px; border-radius: 2px; } }
+@media (max-width: 440px) {
+  .meta { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+  .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .stat:last-child { padding-right: 0; }
+}
+@media (max-width: 860px) {
+  .page { max-width: calc(600px + 2 * var(--pad)); }
+  .layout { display: flex; flex-direction: column; align-items: stretch; gap: 20px; width: 100%; }
+  .now { display: contents; }
+  .now > .card { order: 0; }
+  .stats-wrap { order: 1; }
+  .record { order: 2; }
+  .bytag { order: 3; }
+}
+@media (pointer: coarse) {
+  .chip { min-height: 44px; padding: 10px 14px; font-size: 13px; }
+  .seg button { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 12px; }
+  .btn-ghost { min-height: 44px; }
+  .row-btn { padding: 14px 10px; }
+  .toast button { min-height: 44px; padding: 8px 12px; }
+  .undo-row .btn-ghost { min-height: 44px; }
+  .field input { height: 46px; }
+  .link-row { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div>
+      <h1>The <em>King</em> of My Words</h1>
+      <p class="tagline">Say it. Do it. Record it.</p>
+    </div>
+    <p class="today" id="todayLine"></p>
+  </header>
+
+  <div class="layout">
+    <div class="now">
+      <section class="card declare" id="declareView" aria-labelledby="declareLabel">
+        <form id="declareForm" novalidate>
+          <label class="vow-label" id="declareLabel" for="wordInput">I will</label>
+          <textarea id="wordInput" rows="2" maxlength="280" autocomplete="off" placeholder="write 500 words of the report"></textarea>
+          <div class="meta">
+            <div class="field">
+              <label for="tagInput">Tag <span>optional</span></label>
+              <input id="tagInput" list="tagList" maxlength="24" autocomplete="off" placeholder="work, health, home&hellip;">
+              <datalist id="tagList"></datalist>
+              <div class="chips" id="tagChips"></div>
+            </div>
+            <div class="field">
+              <label for="targetInput">Target <span>optional</span></label>
+              <input id="targetInput" type="time" step="60">
+              <div class="chips" id="targetChips">
+                <button type="button" class="chip" data-mins="30">+30m</button>
+                <button type="button" class="chip" data-mins="60">+1h</button>
+                <button type="button" class="chip" data-mins="120">+2h</button>
+                <button type="button" class="chip" id="targetClear" hidden>clear</button>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="declareBtn" disabled>Give my word</button>
+        </form>
+      </section>
+
+      <section class="card active" id="activeView" tabindex="-1" aria-label="Active commitment" hidden></section>
+
+      <section class="bytag" id="byTag" aria-labelledby="byTagLabel" hidden>
+        <h2 class="eyebrow" id="byTagLabel">Kept by tag</h2>
+        <div id="byTagList"></div>
+      </section>
+    </div>
+
+    <div class="stats-wrap">
+      <div class="rank" id="rankBox">
+        <div class="rank-line"><span class="rank-name" id="rankName"></span><span class="rank-next" id="rankNext"></span></div>
+        <div class="rank-bar" id="rankBar"><i></i></div>
+      </div>
+      <section class="stats" aria-label="Statistics">
+        <div class="stat stat-streak"><b id="stStreak">0</b><span>current streak</span></div>
+        <div class="stat"><b id="stBest">0</b><span>best streak</span></div>
+        <div class="stat"><b id="stKept">0</b><span id="stKeptLabel">kept</span></div>
+        <div class="stat"><b id="stPct">&mdash;</b><span>completion</span></div>
+      </section>
+      <p class="since" id="sinceLine" hidden></p>
+      <div class="strip-wrap" id="stripWrap" hidden>
+        <h2 class="eyebrow">Last 5 weeks</h2>
+        <div class="strip" id="strip" aria-hidden="true"></div>
+        <p class="strip-key"><span><i class="kd kd-kept" aria-hidden="true"></i>kept</span><span><i class="kd kd-broken" aria-hidden="true"></i>broken</span><span><i class="kd kd-none" aria-hidden="true"></i>no word</span></p>
+      </div>
+    </div>
+
+    <section class="record" aria-labelledby="recordLabel">
+      <div class="record-head">
+        <h2 class="eyebrow" id="recordLabel">The record</h2>
+        <div class="seg" id="seg" role="group" aria-label="Filter the record">
+          <button type="button" data-filter="all" aria-pressed="true">All <span class="n"></span></button>
+          <button type="button" data-filter="kept" aria-pressed="false">Kept <span class="n"></span></button>
+          <button type="button" data-filter="broken" aria-pressed="false">Broken <span class="n"></span></button>
+        </div>
+      </div>
+      <div class="tagfilter" id="tagFilter" hidden></div>
+      <ol class="history" id="history"></ol>
+    </section>
+  </div>
+
+  <footer class="data">
+    <div>
+      <h2 class="eyebrow">Your data</h2>
+      <p>Every word is saved in this browser, on this device. Export a backup now and then so the record survives a cleared cache or a new phone. <span id="backupHint"></span></p>
+    </div>
+    <div class="data-actions">
+      <button type="button" class="btn btn-ghost" id="exportJson">Export JSON</button>
+      <button type="button" class="btn btn-ghost" id="exportCsv">Export CSV</button>
+      <button type="button" class="btn btn-ghost" id="importBtn">Import JSON</button>
+      <button type="button" class="btn btn-ghost btn-danger" id="eraseBtn">Erase everything</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </footer>
+</div>
+
+<div class="cheer" id="cheer" aria-hidden="true" hidden>
+  <div class="cheer-box" id="cheerBox"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastAction" hidden></button>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-bg" id="modalBg"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle"></h2>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const KEY = 'king-of-my-words:v1';
+  const MAX_TEXT = 280, MAX_TAG = 24, MAX_NOTE = 280;
+  const PAGE = 50;
+  const UNDO_MS = 120000; // a word given by mistake can be taken back for this long
+  const coarse = window.matchMedia('(pointer: coarse)');
+
+  const state = { active: null, log: [], lastExport: null };
+  const ui = { filter: 'all', tag: null, pending: null, draft: '', limit: PAGE, lastResolution: null, lastDay: null, prevStreak: null };
+
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    form: $('declareForm'), word: $('wordInput'), tag: $('tagInput'), target: $('targetInput'),
+    targetClear: $('targetClear'), declareBtn: $('declareBtn'), tagChips: $('tagChips'), tagList: $('tagList'),
+    declareView: $('declareView'), activeView: $('activeView'),
+    byTag: $('byTag'), byTagList: $('byTagList'),
+    stStreak: $('stStreak'), stBest: $('stBest'), stKept: $('stKept'), stKeptLabel: $('stKeptLabel'),
+    stPct: $('stPct'), since: $('sinceLine'), today: $('todayLine'),
+    seg: $('seg'), tagFilter: $('tagFilter'), history: $('history'),
+    rankBox: $('rankBox'), rankName: $('rankName'), rankNext: $('rankNext'), rankBar: $('rankBar'),
+    stripWrap: $('stripWrap'), strip: $('strip'), cheer: $('cheer'), cheerBox: $('cheerBox'),
+    backupHint: $('backupHint'), importFile: $('importFile'),
+    toast: $('toast'), toastMsg: $('toastMsg'), toastAction: $('toastAction'),
+    modal: $('modal'), modalBg: $('modalBg'), modalTitle: $('modalTitle'), modalBody: $('modalBody'), modalActions: $('modalActions'),
+  };
+
+  /* ---------- small helpers ---------- */
+  const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const isTs = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+  const cleanText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+  const plural = (n, one, many) => (n === 1 ? one : many);
+
+  function uid() {
+    try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (_) { /* fall through */ }
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  // Element builder: every piece of user text goes in through textContent / text nodes.
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const k in attrs) {
+        const v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') node.className = v;
+        else if (k === 'text') node.textContent = v;
+        else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+        else node.setAttribute(k, v === true ? '' : v);
+      }
+    }
+    for (const c of children.flat(Infinity)) {
+      if (c == null || c === false) continue;
+      node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return node;
+  }
+
+  const ICON_PATHS = { check: 'M4 12.5l5 5L20 6.5', x: 'M6 6l12 12M18 6L6 18' };
+  function icon(name) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', ICON_PATHS[name]);
+    svg.append(p);
+    return svg;
+  }
+
+  const sep = () => el('span', { class: 'sep', text: '·' });
+  const interleave = (items) => items.flatMap((x, i) => (i ? [sep(), x] : [x]));
+
+  // The vow is always shown as one sentence: "I will <text>."
+  function vow(text) {
+    return el('span', null, el('span', { class: 'iw', text: 'I will ' }), /[.!?]$/.test(text) ? text : text + '.');
+  }
+
+  // A note is always plain text. Web addresses are recognised only so they can be shown as such
+  // and, in the entry details, opened; the note itself is never read as markup.
+  const URL_RE = /https?:\/\/[^\s]+/g;
+  function tokenize(note) {
+    const out = [];
+    let last = 0;
+    for (const m of note.matchAll(URL_RE)) {
+      let url = m[0];
+      // Sentence punctuation right after an address is not part of it; an unbalanced ")" is.
+      while (/[.,;:!?)\]]$/.test(url)) {
+        const rest = url.slice(0, -1);
+        // A ")" that closes an "(" inside the address belongs to it.
+        if (url.endsWith(')') && rest.split('(').length > rest.split(')').length) break;
+        url = rest;
+      }
+      if (url.length <= 'http://a'.length) continue;
+      out.push(note.slice(last, m.index), { url });
+      last = m.index + url.length;
+    }
+    out.push(note.slice(last));
+    return out;
+  }
+  function noteText(note) {
+    const frag = document.createDocumentFragment();
+    for (const part of tokenize(note)) frag.append(typeof part === 'string' ? part : el('span', { class: 'url', text: part.url }));
+    return frag;
+  }
+  const urlsOf = (note) => [...new Set(tokenize(note).filter((p) => typeof p !== 'string').map((p) => p.url))];
+
+  /* ---------- formatting ---------- */
+  const fmtCache = new Map();
+  function fmt(opts) {
+    const k = JSON.stringify(opts);
+    if (!fmtCache.has(k)) fmtCache.set(k, new Intl.DateTimeFormat(undefined, opts));
+    return fmtCache.get(k);
+  }
+  const fmtTime = (ts) => fmt({ hour: 'numeric', minute: '2-digit' }).format(ts);
+  const fmtLong = (ts) => fmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(ts) + ', ' + fmtTime(ts);
+
+  function fmtDayHeader(ts) {
+    const d = new Date(ts), now = new Date();
+    const days = Math.round((dayStart(Date.now()) - dayStart(ts)) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+    if (d.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+    return fmt(opts).format(d);
+  }
+
+  function fmtDuration(ms, ceil) {
+    let m = ms / 60000;
+    m = ceil ? Math.ceil(m) : Math.floor(m);
+    if (m < 1) return ceil ? '1m' : '<1m';
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60), mm = m % 60;
+    if (h < 24) return mm ? h + 'h ' + mm + 'm' : h + 'h';
+    const d = Math.floor(h / 24), hh = h % 24;
+    return hh ? d + 'd ' + hh + 'h' : d + 'd';
+  }
+  function fmtElapsed(ms) {
+    if (ms < 60000) return '0:' + String(Math.max(0, Math.floor(ms / 1000))).padStart(2, '0');
+    return fmtDuration(ms);
+  }
+
+  function dayStart(ts) { const d = new Date(ts); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function dayKey(ts) { const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+  const pad = (n) => String(n).padStart(2, '0');
+  function localDate(ts) { const d = new Date(ts); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function localStamp(ts) { const d = new Date(ts); return localDate(ts) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+  function csvCell(v) { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+  // "HH:MM" → timestamp. A time that already passed today means tomorrow.
+  function parseTarget(hhmm, now) {
+    const m = /^(\d{2}):(\d{2})/.exec(hhmm);
+    if (!m) return null;
+    const d = new Date(now);
+    d.setHours(+m[1], +m[2], 0, 0);
+    if (d.getTime() < now - 59000) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+  function hhmm(ts) { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+  /* ---------- storage ---------- */
+  function sanitizeCommitment(c) {
+    if (!isObj(c) || typeof c.id !== 'string' || !c.id || !isTs(c.createdAt)) return null;
+    const text = cleanText(c.text, MAX_TEXT);
+    if (!text) return null;
+    return { id: c.id, text, tag: cleanText(c.tag, MAX_TAG), target: isTs(c.target) ? c.target : null, createdAt: c.createdAt };
+  }
+  function sanitizeEntry(e) {
+    const c = sanitizeCommitment(e);
+    if (!c || !isTs(e.resolvedAt) || (e.status !== 'kept' && e.status !== 'broken')) return null;
+    return { id: c.id, text: c.text, tag: c.tag, target: c.target, createdAt: c.createdAt, resolvedAt: e.resolvedAt, status: e.status, note: cleanText(e.note, MAX_NOTE) };
+  }
+  function sanitizeState(raw) {
+    const out = { active: null, log: [], lastExport: null };
+    if (!isObj(raw)) return out;
+    out.active = sanitizeCommitment(raw.active);
+    if (Array.isArray(raw.log)) {
+      const seen = new Set();
+      for (const item of raw.log) {
+        const e = sanitizeEntry(item);
+        if (e && !seen.has(e.id)) { seen.add(e.id); out.log.push(e); }
+      }
+      out.log.sort((a, b) => a.resolvedAt - b.resolvedAt);
+    }
+    if (isTs(raw.lastExport)) out.lastExport = raw.lastExport;
+    return out;
+  }
+  function loadState() {
+    let raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (_) { return sanitizeState(null); }
+    if (!raw) return sanitizeState(null);
+    try { return sanitizeState(JSON.parse(raw)); }
+    catch (_) {
+      // Corrupted storage: keep a copy of whatever is there before anything overwrites it.
+      try { localStorage.setItem(KEY + ':recovery', raw); } catch (__) { /* ignore */ }
+      return sanitizeState(null);
+    }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+    catch (_) {
+      showToast('Could not save. Browser storage is full or blocked. Export a backup now.', { kind: 'error', duration: 10000 });
+      return false;
+    }
+  }
+  function commit() { save(); render(); }
+
+  /* ---------- stats ---------- */
+  const isLate = (e) => !!(e.target && e.resolvedAt > e.target);
+
+  // The climb: every rank is unlocked by how many words you have kept in total. Kept words never
+  // stop counting, so a broken word never takes a rank away — the crown only moves forward.
+  const RANKS = [
+    { name: 'Sayer', at: 0 },
+    { name: 'Starter', at: 1 },
+    { name: 'Doer', at: 5 },
+    { name: 'Keeper', at: 15 },
+    { name: 'True to My Word', at: 30 },
+    { name: 'Word Knight', at: 60 },
+    { name: 'Word Prince', at: 100 },
+    { name: 'King of My Words', at: 200 },
+  ];
+  function rankFor(kept) {
+    let i = 0;
+    while (i + 1 < RANKS.length && kept >= RANKS[i + 1].at) i++;
+    return { index: i, rank: RANKS[i], next: RANKS[i + 1] || null };
+  }
+
+  // Kept/broken counts for the last `days` local days, oldest first, today last.
+  function dayCounts(days) {
+    const today = dayStart(Date.now());
+    const out = [];
+    for (let i = 0; i < days; i++) out.push({ kept: 0, broken: 0 });
+    for (const e of state.log) {
+      const diff = Math.round((today - dayStart(e.resolvedAt)) / 86400000);
+      if (diff >= 0 && diff < days) out[days - 1 - diff][e.status === 'kept' ? 'kept' : 'broken']++;
+    }
+    return out;
+  }
+
+  function computeStats() {
+    const total = state.log.length;
+    let kept = 0, best = 0, run = 0, firstAt = null;
+    for (const e of state.log) {
+      if (e.status === 'kept') { kept++; run++; if (run > best) best = run; } else { run = 0; }
+      if (firstAt === null || e.createdAt < firstAt) firstAt = e.createdAt;
+    }
+    if (state.active && (firstAt === null || state.active.createdAt < firstAt)) firstAt = state.active.createdAt;
+    const dayCount = firstAt ? Math.round((dayStart(Date.now()) - dayStart(firstAt)) / 86400000) + 1 : 0;
+    return { total, kept, broken: total - kept, pct: total ? Math.round((kept / total) * 100) : null, streak: run, best, firstAt, dayCount };
+  }
+  function tagStats() {
+    const map = new Map();
+    for (const e of state.log) {
+      if (!e.tag) continue;
+      const k = e.tag.toLowerCase();
+      const row = map.get(k) || { tag: e.tag, kept: 0, total: 0 };
+      row.total++;
+      if (e.status === 'kept') row.kept++;
+      map.set(k, row);
+    }
+    return [...map.values()].sort((a, b) => b.total - a.total || a.tag.localeCompare(b.tag));
+  }
+  function recentTags() {
+    const seen = new Map();
+    const scan = (t) => { if (t && !seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t); };
+    if (state.active) scan(state.active.tag);
+    for (let i = state.log.length - 1; i >= 0; i--) scan(state.log[i].tag);
+    return [...seen.values()].slice(0, 6);
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    renderStage();
+    renderTagChips();
+    renderRank();
+    renderStats();
+    renderSeg();
+    renderHistory();
+    renderByTag();
+    renderStrip();
+    renderData();
+  }
+
+  function renderStage() {
+    const a = state.active;
+    dom.declareView.hidden = !!a;
+    dom.activeView.hidden = !a;
+    if (!a) {
+      dom.activeView.replaceChildren();
+      delete dom.activeView.dataset.id;
+      return;
+    }
+    if (dom.activeView.dataset.id !== a.id) {
+      dom.activeView.dataset.id = a.id;
+      dom.activeView.replaceChildren(
+        el('div', { class: 'active-head' },
+          el('h2', { class: 'eyebrow' }, el('span', { class: 'dot' }), 'Active word'),
+          el('span', { class: 'elapsed', 'data-el': 'elapsed' })),
+        el('p', { class: 'vow' }, vow(a.text)),
+        el('p', { class: 'vow-meta' }, interleave([
+          a.tag,
+          'declared ' + fmtTime(a.createdAt),
+          a.target ? el('span', { class: 'target' }) : null,
+        ].filter(Boolean))),
+        el('div', { class: 'bar', 'data-el': 'bar' }, el('i')),
+        el('div', { id: 'activeActions' }),
+        el('p', { class: 'hint' }, 'One word at a time. Settle this before giving another.'),
+        el('div', { class: 'undo-row', 'data-el': 'undo', hidden: true },
+          el('button', { type: 'button', class: 'btn btn-ghost', onclick: undoDeclare }, 'Undo this word'),
+          el('span', { class: 'undo-left', 'data-el': 'undo-left' })),
+      );
+    }
+    renderActions();
+    tick();
+  }
+
+  function renderActions() {
+    const box = $('activeActions');
+    if (!box) return;
+    const p = ui.pending;
+    const keptBtn = el('button', { type: 'button', class: 'btn btn-kept' + (p === 'kept' ? ' is-selected' : ''), 'aria-pressed': String(p === 'kept'), onclick: () => setPending('kept') }, icon('check'), 'Kept');
+    const brokenBtn = el('button', { type: 'button', class: 'btn btn-broken' + (p === 'broken' ? ' is-selected' : ''), 'aria-pressed': String(p === 'broken'), onclick: () => setPending('broken') }, icon('x'), 'Broken');
+    if (!p) {
+      box.replaceChildren(el('div', { class: 'actions' }, keptBtn, brokenBtn));
+      return;
+    }
+    const input = el('input', {
+      type: 'text', id: 'noteInput', maxlength: MAX_NOTE, autocomplete: 'off', value: ui.draft,
+      placeholder: p === 'kept' ? 'Proof or note (optional)' : 'Skipped or failed. Why? (optional)',
+      'aria-label': p === 'kept' ? 'Proof or note, optional' : 'Reason, optional',
+      oninput: () => { ui.draft = input.value; },
+      onkeydown: (ev) => {
+        if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); recordNow(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); setPending(null); }
+      },
+    });
+    box.replaceChildren(
+      el('div', { class: 'actions' }, keptBtn, brokenBtn),
+      el('div', { class: 'active-note' }, input,
+        el('div', { class: 'note-row' },
+          el('button', { type: 'button', class: 'btn btn-outline', onclick: () => setPending(null) }, 'Back'),
+          el('button', { type: 'button', class: 'btn btn-record ' + (p === 'kept' ? 'btn-record-kept' : 'btn-record-broken'), onclick: () => recordNow() }, 'Record as ' + p))),
+    );
+    if (!coarse.matches) input.focus({ preventScroll: true });
+  }
+
+  // Live part of the active card: elapsed time, time left, progress line.
+  function tick() {
+    const a = state.active;
+    const elapsedNode = dom.activeView.querySelector('[data-el="elapsed"]');
+    if (!a || !elapsedNode) return;
+    const now = Date.now();
+    elapsedNode.textContent = fmtElapsed(now - a.createdAt) + ' elapsed';
+    const undo = dom.activeView.querySelector('[data-el="undo"]');
+    if (undo) {
+      const left = UNDO_MS - (now - a.createdAt);
+      undo.hidden = left <= 0;
+      if (left > 0) undo.lastElementChild.textContent = Math.floor(left / 60000) + ':' + pad(Math.floor(left / 1000) % 60) + ' left';
+    }
+    const bar = dom.activeView.querySelector('[data-el="bar"]');
+    const targetNode = dom.activeView.querySelector('.target');
+    if (!a.target || !bar || !targetNode) return;
+    const left = a.target - now;
+    const span = a.target - a.createdAt;
+    const ratio = span > 0 ? (now - a.createdAt) / span : 1;
+    bar.hidden = false;
+    bar.classList.toggle('over', left <= 0);
+    bar.firstElementChild.style.width = (Math.min(1, Math.max(0, ratio)) * 100).toFixed(1) + '%';
+    targetNode.textContent = left > 0
+      ? 'by ' + fmtTime(a.target) + ' · ' + fmtDuration(left, true) + ' left'
+      : 'target ' + fmtTime(a.target) + ' passed · ' + fmtDuration(-left) + ' over';
+    targetNode.classList.toggle('over', left <= 0);
+  }
+
+  // Rebuild the recent-tag chips only when the set of tags changes; while the user types, just
+  // refresh the pressed state so the field is never disturbed by DOM churn under it.
+  function renderTagChips() {
+    const tags = recentTags();
+    const key = tags.join('\n');
+    if (dom.tagChips.dataset.tags !== key) {
+      dom.tagChips.dataset.tags = key;
+      dom.tagChips.replaceChildren(...tags.map((t) => el('button', {
+        type: 'button', class: 'chip', 'data-tag': t,
+        onclick: () => {
+          dom.tag.value = dom.tag.value.trim().toLowerCase() === t.toLowerCase() ? '' : t;
+          renderTagChips();
+        },
+      }, t)));
+      dom.tagList.replaceChildren(...tags.map((t) => el('option', { value: t })));
+    }
+    const current = dom.tag.value.trim().toLowerCase();
+    dom.tagChips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.tag.toLowerCase() === current)));
+  }
+
+  function bump(node) { node.classList.remove('bump'); void node.offsetWidth; node.classList.add('bump'); }
+
+  // Where the user stands on the climb and what the next rank needs.
+  function renderRank() {
+    const s = computeStats();
+    const r = rankFor(s.kept);
+    dom.rankName.textContent = r.rank.name;
+    if (r.next) {
+      const left = r.next.at - s.kept;
+      dom.rankNext.textContent = left + ' ' + plural(left, 'kept word', 'kept words') + ' to ' + r.next.name;
+      const span = r.next.at - r.rank.at;
+      dom.rankBar.hidden = false;
+      dom.rankBar.firstElementChild.style.width = Math.min(100, Math.round(((s.kept - r.rank.at) / span) * 100)) + '%';
+    } else {
+      dom.rankNext.textContent = 'Every kept word built this.';
+      dom.rankBar.hidden = true;
+    }
+  }
+
+  // 35 small cells, one per day: how loud the last 5 weeks have been.
+  function renderStrip() {
+    const counts = dayCounts(35);
+    const any = state.log.length > 0;
+    dom.stripWrap.hidden = !any;
+    if (!any) { dom.strip.replaceChildren(); return; }
+    const dayFmt = fmt({ weekday: 'short', day: 'numeric', month: 'short' });
+    dom.strip.replaceChildren(...counts.map((c, i) => {
+      const ago = counts.length - 1 - i;
+      const when = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : dayFmt.format(Date.now() - ago * 86400000);
+      const said = (c.kept ? c.kept + ' kept' : '') + (c.kept && c.broken ? ' · ' : '') + (c.broken ? c.broken + ' broken' : '');
+      const cls = c.kept ? (c.kept > 2 ? 'lvl3' : c.kept > 1 ? 'lvl2' : 'lvl1') : (c.broken ? 'miss' : 'none');
+      return el('i', { class: 'cell ' + cls, title: when + (said ? ': ' + said : ': no word') });
+    }));
+  }
+
+  function renderStats() {
+    const s = computeStats();
+    dom.stStreak.textContent = String(s.streak);
+    dom.stBest.textContent = String(s.best);
+    dom.stKept.textContent = String(s.kept);
+    dom.stKeptLabel.textContent = s.total ? 'of ' + s.total + ' kept' : 'words kept';
+    dom.stPct.textContent = s.pct === null ? '—' : s.pct + '%';
+    if (ui.prevStreak !== null && ui.prevStreak !== s.streak) bump(dom.stStreak);
+    ui.prevStreak = s.streak;
+    if (s.firstAt) {
+      dom.since.hidden = false;
+      dom.since.textContent = 'First word ' + fmt({ day: 'numeric', month: 'short', year: 'numeric' }).format(s.firstAt) + ' · Day ' + s.dayCount;
+    } else {
+      dom.since.hidden = true;
+    }
+  }
+
+  function renderSeg() {
+    const s = computeStats();
+    const counts = { all: s.total, kept: s.kept, broken: s.broken };
+    dom.seg.querySelectorAll('button').forEach((b) => {
+      const f = b.dataset.filter;
+      b.setAttribute('aria-pressed', String(f === ui.filter));
+      b.querySelector('.n').textContent = counts[f];
+    });
+    if (ui.tag) {
+      dom.tagFilter.hidden = false;
+      dom.tagFilter.replaceChildren(
+        el('span', { text: 'Tag:' }),
+        el('button', { type: 'button', class: 'chip', 'aria-pressed': 'true', onclick: () => setTagFilter(null) }, ui.tag + ' ×'));
+    } else {
+      dom.tagFilter.hidden = true;
+      dom.tagFilter.replaceChildren();
+    }
+  }
+
+  // One recorded word. The row is a button, so it holds phrasing content only (spans, no links);
+  // the addresses in a note are opened from the entry details.
+  function buildRow(e, animate) {
+    const meta = [
+      fmtTime(e.resolvedAt),
+      el('span', { class: e.status === 'kept' ? 'st-kept' : 'st-broken', text: e.status === 'kept' ? 'Kept' : 'Broken' }),
+    ];
+    if (isLate(e)) meta.push(el('span', { class: 'late', text: 'late' }));
+    if (e.tag) meta.push(e.tag);
+    meta.push('in ' + fmtDuration(e.resolvedAt - e.createdAt));
+    const content = [el('span', { class: 'row-vow' }, vow(e.text)), el('span', { class: 'row-meta' }, interleave(meta))];
+    if (e.note) content.push(el('span', { class: 'row-note' }, noteText(e.note)));
+    return el('li', animate ? { class: 'row-enter' } : null,
+      el('button', { type: 'button', class: 'row-btn', onclick: () => openEntry(e.id) },
+        el('span', { class: 'mark mark-' + e.status, 'aria-hidden': 'true' }, icon(e.status === 'kept' ? 'check' : 'x')),
+        el('span', { class: 'row-body' }, ...content)));
+  }
+
+  function renderHistory() {
+    ui.lastDay = dayKey(Date.now());
+    const tag = ui.tag ? ui.tag.toLowerCase() : null;
+    const list = state.log
+      .filter((e) => (ui.filter === 'all' || e.status === ui.filter) && (!tag || e.tag.toLowerCase() === tag))
+      .sort((a, b) => b.resolvedAt - a.resolvedAt);
+    if (!list.length) {
+      const why = ui.tag ? 'No words tagged "' + ui.tag + '" in this view.'
+        : ui.filter === 'kept' ? 'Kept words will show up here.'
+        : ui.filter === 'broken' ? 'No broken words in this view.'
+        : 'Give your first word and it starts the record.';
+      dom.history.replaceChildren(el('li', { class: 'empty' }, el('b', { text: 'Nothing here yet.' }), why));
+      return;
+    }
+    const out = [];
+    let day = null;
+    list.slice(0, ui.limit).forEach((e) => {
+      const k = dayKey(e.resolvedAt);
+      if (k !== day) { day = k; out.push(el('li', { class: 'day' }, fmtDayHeader(e.resolvedAt))); }
+      const fresh = ui.lastResolution && ui.lastResolution.fresh && e.id === ui.lastResolution.entry.id;
+      out.push(buildRow(e, fresh));
+    });
+    if (list.length > ui.limit) {
+      out.push(el('li', null, el('button', { type: 'button', class: 'btn btn-ghost more', onclick: () => { ui.limit += PAGE; renderHistory(); } },
+        'Show ' + Math.min(PAGE, list.length - ui.limit) + ' more')));
+    }
+    dom.history.replaceChildren(...out);
+    if (ui.lastResolution) ui.lastResolution.fresh = false;
+  }
+
+  function renderByTag() {
+    const rows = tagStats();
+    dom.byTag.hidden = !rows.length;
+    const current = ui.tag ? ui.tag.toLowerCase() : null;
+    const cells = rows.slice(0, 6).map((r) => el('button', {
+      type: 'button', class: 'tagrow', 'aria-pressed': String(r.tag.toLowerCase() === current),
+      title: 'Show only words tagged ' + r.tag,
+      onclick: () => setTagFilter(r.tag.toLowerCase() === current ? null : r.tag),
+    },
+      el('span', { class: 'tname', text: r.tag }),
+      el('span', { class: 'tnum', text: r.kept + ' / ' + r.total }),
+      el('span', { class: 'tbar' }, el('i', { style: 'width:' + Math.round((r.kept / r.total) * 100) + '%' }))));
+    if (rows.length > 6) cells.push(el('p', { class: 'hint', text: (rows.length - 6) + ' more ' + plural(rows.length - 6, 'tag', 'tags') + ' not shown' }));
+    dom.byTagList.replaceChildren(...cells);
+  }
+
+  function renderToday() {
+    dom.today.textContent = fmt({ weekday: 'long', day: 'numeric', month: 'long' }).format(Date.now());
+  }
+
+  function renderData() {
+    const t = state.lastExport;
+    let text = '', warn = false;
+    if (t) {
+      const days = Math.round((dayStart(Date.now()) - dayStart(t)) / 86400000);
+      text = days === 0 ? 'Last backup: today.' : days === 1 ? 'Last backup: yesterday.' : 'Last backup: ' + days + ' days ago.';
+      warn = days >= 7;
+    } else if (state.log.length) {
+      text = 'No backup exported yet.';
+    }
+    dom.backupHint.textContent = text;
+    dom.backupHint.classList.toggle('warn', warn);
+  }
+
+  /* ---------- toast + modal ---------- */
+  let toastTimer = null, toastAction = null;
+  function showToast(message, opts = {}) {
+    clearTimeout(toastTimer);
+    dom.toastMsg.textContent = message;
+    toastAction = opts.onAction || null;
+    dom.toastAction.hidden = !opts.actionLabel;
+    dom.toastAction.textContent = opts.actionLabel || '';
+    dom.toast.classList.toggle('toast-error', opts.kind === 'error');
+    dom.toast.hidden = false;
+    toastTimer = setTimeout(hideToast, opts.duration || 4000);
+  }
+  function hideToast() { clearTimeout(toastTimer); dom.toast.hidden = true; toastAction = null; }
+
+  let modalReturnFocus = null;
+  function openModal({ title, body, actions }) {
+    modalReturnFocus = document.activeElement;
+    dom.modalTitle.textContent = title;
+    dom.modalBody.replaceChildren(...(Array.isArray(body) ? body : [body]));
+    dom.modalActions.replaceChildren(...actions);
+    dom.modal.hidden = false;
+    // Locking the page removes its scrollbar; pad by its width so nothing shifts sideways.
+    const bar = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = bar > 0 ? bar + 'px' : '';
+    // Focus the field if there is one, otherwise the safest button (never a destructive one).
+    const first = dom.modal.querySelector('input') || dom.modal.querySelector('#modalActions button:not(.btn-danger):not(.btn-danger-solid)') || dom.modal.querySelector('.modal-card');
+    if (first) first.focus({ preventScroll: true });
+  }
+  function closeModal() {
+    if (dom.modal.hidden) return;
+    dom.modal.hidden = true;
+    dom.modalBody.replaceChildren();
+    dom.modalActions.replaceChildren();
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    if (modalReturnFocus && typeof modalReturnFocus.focus === 'function' && document.contains(modalReturnFocus)) modalReturnFocus.focus({ preventScroll: true });
+  }
+
+  /* ---------- celebration ---------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let cheerTimer = null;
+
+  function cheerSvg(kind) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 120 120');
+    svg.setAttribute('class', kind === 'crown' ? 'cheer-crown' : 'cheer-check');
+    svg.setAttribute('aria-hidden', 'true');
+    if (kind === 'crown') {
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', 'M24 78 L24 44 L43 58 L60 32 L77 58 L96 44 L96 78 Z');
+      p.setAttribute('class', 'crown');
+      svg.append(p);
+      return svg;
+    }
+    const ring = document.createElementNS(ns, 'circle');
+    ring.setAttribute('cx', '60'); ring.setAttribute('cy', '60'); ring.setAttribute('r', '52');
+    ring.setAttribute('class', 'ring');
+    const tick = document.createElementNS(ns, 'path');
+    tick.setAttribute('d', 'M38 62 L54 78 L84 44');
+    tick.setAttribute('class', 'tick');
+    svg.append(ring, tick);
+    for (let i = 0; i < 12; i++) {
+      const s = document.createElementNS(ns, 'circle');
+      const ang = (i / 12) * Math.PI * 2;
+      s.setAttribute('cx', '60'); s.setAttribute('cy', '60'); s.setAttribute('r', i % 2 ? '2.4' : '3.4');
+      s.setAttribute('class', 'spark');
+      s.style.setProperty('--dx', Math.round(Math.cos(ang) * 88) + 'px');
+      s.style.setProperty('--dy', Math.round(Math.sin(ang) * 88) + 'px');
+      s.style.setProperty('--d', (0.55 + (i % 4) * 0.09).toFixed(2) + 's');
+      svg.append(s);
+    }
+    return svg;
+  }
+
+  // The moment a word is kept: the tick draws itself in gold. When the kept count crosses a rank,
+  // the crown takes the stage instead and names the new rank. Never interactive, never long.
+  function celebrate(rankUp) {
+    if (reduceMotion.matches) return;
+    clearTimeout(cheerTimer);
+    dom.cheer.classList.toggle('rank-up', rankUp);
+    if (rankUp) {
+      const r = rankFor(computeStats().kept).rank;
+      dom.cheerBox.replaceChildren(
+        cheerSvg('crown'),
+        el('p', { class: 'cheer-rank', text: r.name }),
+        el('p', { class: 'cheer-sub', text: 'New rank · ' + computeStats().kept + ' ' + plural(computeStats().kept, 'word', 'words') + ' kept' }));
+    } else {
+      dom.cheerBox.replaceChildren(cheerSvg('check'), el('p', { class: 'cheer-sub', text: 'Word kept' }));
+    }
+    dom.cheer.hidden = false;
+    void dom.cheerBox.offsetWidth; // restart the draw animations
+    cheerTimer = setTimeout(() => { dom.cheer.hidden = true; }, rankUp ? 3200 : 1500);
+  }
+
+  /* ---------- declare / resolve / undo ---------- */
+  function updateDeclareBtn() { dom.declareBtn.disabled = !dom.word.value.trim(); }
+  function autosize() {
+    dom.word.style.height = 'auto';
+    const h = Math.min(dom.word.scrollHeight, 240);
+    dom.word.style.height = h + 'px';
+    dom.word.style.overflowY = dom.word.scrollHeight > 240 ? 'auto' : 'hidden';
+  }
+  function syncTargetClear() { dom.targetClear.hidden = !dom.target.value; }
+
+  function onDeclare(ev) {
+    ev.preventDefault();
+    const text = cleanText(dom.word.value.replace(/^i\s*(?:will|'ll)\s+/i, ''), MAX_TEXT);
+    if (!text) return;
+    state.active = { id: uid(), text, tag: cleanText(dom.tag.value, MAX_TAG), target: dom.target.value ? parseTarget(dom.target.value, Date.now()) : null, createdAt: Date.now() };
+    ui.pending = null;
+    ui.draft = '';
+    dom.word.value = '';
+    autosize();
+    updateDeclareBtn();
+    dom.target.value = '';
+    syncTargetClear();
+    commit();
+    if (!coarse.matches) dom.activeView.focus({ preventScroll: true });
+  }
+
+  // Takes back a word given by mistake and puts its text back in the box. Only for UNDO_MS after
+  // declaring; after that the word stands and has to be kept or broken.
+  function undoDeclare() {
+    const a = state.active;
+    if (!a || Date.now() - a.createdAt > UNDO_MS) return;
+    state.active = null;
+    ui.pending = null;
+    ui.draft = '';
+    ui.prevStreak = computeStats().streak;
+    dom.word.value = a.text;
+    dom.tag.value = a.tag;
+    autosize();
+    updateDeclareBtn();
+    commit();
+    dom.word.focus();
+    dom.word.setSelectionRange(a.text.length, a.text.length);
+  }
+
+  function setPending(p) {
+    if (!p) ui.draft = '';
+    ui.pending = p;
+    renderActions();
+  }
+
+  function recordNow() {
+    const p = ui.pending, a = state.active;
+    if (!p || !a) return;
+    const note = cleanText(ui.draft, MAX_NOTE);
+    const rankBefore = rankFor(computeStats().kept).index;
+    const entry = { id: a.id, text: a.text, tag: a.tag, target: a.target, createdAt: a.createdAt, resolvedAt: Date.now(), status: p, note };
+    state.log.push(entry);
+    // The record is kept oldest-first even if the device clock jumps backwards between two words.
+    state.log.sort((x, y) => x.resolvedAt - y.resolvedAt);
+    state.active = null;
+    ui.pending = null;
+    ui.draft = '';
+    ui.limit = PAGE;
+    ui.lastResolution = { entry, fresh: true };
+    commit();
+    const s = computeStats();
+    if (p === 'kept') {
+      showToast((isLate(entry) ? 'Kept, late.' : 'Kept.') + ' Streak ' + s.streak + '.', { actionLabel: 'Undo', onAction: undoResolve, duration: 8000 });
+      celebrate(rankFor(s.kept).index > rankBefore);
+    } else showToast('Broken. Streak back to 0.', { actionLabel: 'Undo', onAction: undoResolve, duration: 8000 });
+    if (!coarse.matches) dom.word.focus({ preventScroll: true });
+  }
+
+  function undoResolve() {
+    const r = ui.lastResolution;
+    if (!r) return;
+    const i = state.log.findIndex((e) => e.id === r.entry.id);
+    if (i !== -1) state.log.splice(i, 1);
+    state.active = { id: r.entry.id, text: r.entry.text, tag: r.entry.tag, target: r.entry.target, createdAt: r.entry.createdAt };
+    ui.lastResolution = null;
+    hideToast();
+    commit();
+  }
+
+  function setTagFilter(t) {
+    ui.tag = t;
+    ui.limit = PAGE;
+    renderSeg();
+    renderByTag();
+    renderHistory();
+    if (t && coarse.matches) dom.seg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- entry details / delete ---------- */
+  function openEntry(id) {
+    const e = state.log.find((x) => x.id === id);
+    if (!e) return;
+    const rows = [
+      ['Status', e.status === 'kept' ? (isLate(e) ? 'Kept, late' : 'Kept') : 'Broken'],
+      ['Recorded', fmtLong(e.resolvedAt)],
+      ['Declared', fmtLong(e.createdAt)],
+      ['Duration', fmtDuration(e.resolvedAt - e.createdAt)],
+    ];
+    if (e.tag) rows.push(['Tag', e.tag]);
+    if (e.target) rows.push(['Target', fmtTime(e.target) + (e.status === 'kept' ? (isLate(e) ? ' · missed by ' + fmtDuration(e.resolvedAt - e.target) : ' · met') : '')]);
+    const body = [
+      el('p', { class: 'vow modal-vow' }, vow(e.text)),
+      el('dl', { class: 'facts' }, rows.flatMap(([k, v]) => [el('dt', { text: k }), el('dd', { text: v })])),
+    ];
+    if (e.note) body.push(el('div', { class: 'modal-note' },
+      el('span', { class: 'eyebrow', text: 'Note' }),
+      el('p', { class: 'note-text' }, noteText(e.note)),
+      ...urlsOf(e.note).map((u) => el('a', { class: 'link-row', href: u, target: '_blank', rel: 'noopener noreferrer' }, el('b', { text: 'Open link' }), el('span', { text: u })))));
+    let armed = false, disarm = null;
+    const del = el('button', { type: 'button', class: 'btn btn-ghost btn-danger push' }, 'Delete entry');
+    del.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        del.classList.add('armed');
+        del.textContent = 'Click again to delete';
+        disarm = setTimeout(() => { armed = false; del.classList.remove('armed'); del.textContent = 'Delete entry'; }, 4000);
+        return;
+      }
+      clearTimeout(disarm);
+      state.log = state.log.filter((x) => x.id !== id);
+      ui.limit = PAGE;
+      closeModal();
+      commit();
+      showToast('Entry deleted. Your stats were recalculated.');
+    });
+    openModal({ title: 'Recorded entry', body, actions: [del, el('button', { type: 'button', class: 'btn btn-outline', onclick: closeModal }, 'Close')] });
+  }
+
+  /* ---------- export / import / erase ---------- */
+  function download(name, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const a = el('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  function markExported() { state.lastExport = Date.now(); commit(); }
+
+  function exportJson() {
+    const payload = { app: 'The King of My Words', version: 1, exportedAt: new Date().toISOString(), active: state.active, log: state.log };
+    download('king-of-my-words_' + localDate(Date.now()) + '.json', JSON.stringify(payload, null, 2), 'application/json');
+    markExported();
+    showToast(state.log.length ? 'Backup exported: ' + state.log.length + ' ' + plural(state.log.length, 'word', 'words') + '.' : 'Backup exported.');
+  }
+  function exportCsv() {
+    const head = ['Date', 'Time', 'Commitment', 'Status', 'Late', 'Tag', 'Target time', 'Duration (min)', 'Note', 'Declared at', 'Recorded at', 'ID'];
+    const lines = [head];
+    for (const e of state.log) {
+      const d = new Date(e.resolvedAt);
+      lines.push([
+        localDate(e.resolvedAt), pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()),
+        'I will ' + e.text, e.status, isLate(e) ? 'yes' : 'no', e.tag, e.target ? hhmm(e.target) : '',
+        String(Math.round((e.resolvedAt - e.createdAt) / 60000)), e.note, localStamp(e.createdAt), localStamp(e.resolvedAt), e.id,
+      ]);
+    }
+    download('king-of-my-words_' + localDate(Date.now()) + '.csv', '\uFEFF' + lines.map((r) => r.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+    markExported();
+    showToast(state.log.length ? 'CSV exported: ' + state.log.length + ' ' + plural(state.log.length, 'row', 'rows') + '.' : 'CSV exported (the record is empty).');
+  }
+
+  async function onImportFile() {
+    const file = dom.importFile.files && dom.importFile.files[0];
+    dom.importFile.value = '';
+    if (!file) return;
+    let incoming;
+    try { incoming = sanitizeState(JSON.parse(await file.text())); }
+    catch (_) { showToast('That file is not a valid backup.', { kind: 'error' }); return; }
+    const have = new Set(state.log.map((e) => e.id));
+    const fresh = incoming.log.filter((e) => !have.has(e.id));
+    const takeActive = incoming.active && !state.active && !have.has(incoming.active.id) ? incoming.active : null;
+    if (!fresh.length && !takeActive) { showToast('Everything in that file is already on your record.'); return; }
+    const n = fresh.length;
+    openModal({
+      title: 'Import backup',
+      body: [el('p', { text:
+        (n ? 'Adds ' + n + ' ' + plural(n, 'entry', 'entries') + ' to your record.' : '') +
+        (incoming.log.length - n ? ' ' + (incoming.log.length - n) + ' ' + plural(incoming.log.length - n, 'entry', 'entries') + ' already on your record will be skipped.' : '') +
+        (takeActive ? ' The active word from the file is restored.' : '') +
+        (incoming.active && !takeActive ? ' Your current active word is kept.' : '') +
+        ' Nothing already recorded is overwritten.' })],
+      actions: [
+        el('button', { type: 'button', class: 'btn btn-ghost', onclick: closeModal }, 'Cancel'),
+        el('button', { type: 'button', class: 'btn btn-primary', style: 'width:auto', onclick: () => {
+          state.log.push(...fresh);
+          state.log.sort((a, b) => a.resolvedAt - b.resolvedAt);
+          if (takeActive) state.active = takeActive;
+          ui.limit = PAGE;
+          closeModal();
+          commit();
+          showToast('Imported ' + n + ' ' + plural(n, 'entry', 'entries') + (takeActive ? ' and the active word' : '') + '.');
+        } }, 'Import'),
+      ],
+    });
+  }
+
+  function openErase() {
+    const n = state.log.length;
+    const input = el('input', { type: 'text', autocomplete: 'off', 'aria-label': 'Type ERASE to confirm', placeholder: 'ERASE' });
+    const go = el('button', { type: 'button', class: 'btn btn-danger-solid', disabled: true }, 'Erase everything');
+    input.addEventListener('input', () => { go.disabled = input.value.trim().toUpperCase() !== 'ERASE'; });
+    input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !go.disabled) go.click(); });
+    go.addEventListener('click', () => {
+      state.active = null;
+      state.log = [];
+      state.lastExport = null;
+      ui.pending = null; ui.draft = ''; ui.tag = null; ui.limit = PAGE; ui.lastResolution = null; ui.prevStreak = null;
+      dom.word.value = ''; dom.tag.value = ''; dom.target.value = '';
+      autosize(); updateDeclareBtn(); syncTargetClear();
+      closeModal();
+      commit();
+      showToast('Everything erased. The record starts empty.');
+    });
+    openModal({
+      title: 'Erase everything?',
+      body: [
+        el('p', { text: 'This deletes ' + (n ? n + ' ' + plural(n, 'recorded word', 'recorded words') : 'your record') + (state.active ? ' and your active word' : '') + ' from this browser. It cannot be undone. Export a backup first if you may want it back.' }),
+        el('label', { text: 'Type ERASE to confirm' }), input,
+      ],
+      actions: [el('button', { type: 'button', class: 'btn btn-outline', onclick: closeModal }, 'Cancel'), go],
+    });
+  }
+
+  /* ---------- events ---------- */
+  dom.form.addEventListener('submit', onDeclare);
+  dom.word.addEventListener('input', () => { autosize(); updateDeclareBtn(); });
+  dom.word.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); dom.form.requestSubmit(); }
+  });
+  dom.tag.addEventListener('input', renderTagChips);
+  dom.target.addEventListener('input', syncTargetClear);
+  dom.targetClear.addEventListener('click', () => { dom.target.value = ''; syncTargetClear(); });
+  document.getElementById('targetChips').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-mins]');
+    if (!b) return;
+    dom.target.value = hhmm(Date.now() + Number(b.dataset.mins) * 60000);
+    syncTargetClear();
+  });
+  dom.seg.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-filter]');
+    if (!b) return;
+    ui.filter = b.dataset.filter;
+    ui.limit = PAGE;
+    renderSeg();
+    renderHistory();
+  });
+  $('exportJson').addEventListener('click', exportJson);
+  $('exportCsv').addEventListener('click', exportCsv);
+  $('importBtn').addEventListener('click', () => dom.importFile.click());
+  dom.importFile.addEventListener('change', onImportFile);
+  $('eraseBtn').addEventListener('click', openErase);
+  dom.toastAction.addEventListener('click', () => { if (toastAction) toastAction(); });
+  dom.modalBg.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (ev) => {
+    if (dom.modal.hidden) return;
+    if (ev.key === 'Escape') { ev.preventDefault(); closeModal(); return; }
+    if (ev.key === 'Tab') {
+      const items = [...dom.modal.querySelectorAll('button:not([disabled]), input, a[href]')].filter((x) => !x.hidden);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    }
+  });
+  // Another tab changed the record: pick up its version.
+  window.addEventListener('storage', (ev) => {
+    if (ev.key !== KEY) return;
+    Object.assign(state, loadState());
+    ui.pending = null; ui.draft = ''; ui.limit = PAGE; ui.lastResolution = null;
+    render();
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+  /* ---------- boot ---------- */
+  Object.assign(state, loadState());
+  render();
+  autosize();
+  updateDeclareBtn();
+  if (state.active) ui.prevStreak = computeStats().streak;
+  if (!state.active && !coarse.matches) dom.word.focus({ preventScroll: true });
+  renderToday();
+  // Ask the browser not to clear this data under storage pressure. Some grant it silently, others
+  // ignore it; either way the record keeps working.
+  if (navigator.storage && typeof navigator.storage.persist === 'function') navigator.storage.persist().catch(() => { /* ignore */ });
+  setInterval(() => {
+    tick();
+    if (dayKey(Date.now()) !== ui.lastDay) { renderHistory(); renderToday(); renderStrip(); }
+  }, 1000);
+})();
+</script>
+</body>
+</html>
